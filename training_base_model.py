@@ -20,12 +20,12 @@ EPS = 0.2 # corruption fraction
 
 # EPS of the batches will update malicious model params. 
 # in each epoch, params are aggregated to update the base model. 
-def training_CNN_with_attack(args, model, train_loader, test_loader, agg='randeigen', device='cuda:0'):
+def training_CNN_with_attack(args, model, train_loader, test_loader, device='cuda:0'):
     iter = 0
     criterion = nn.CrossEntropyLoss()
     
 
-    n_participant = len(train_loader)//3
+    n_participant = len(train_loader)//5
     n_malicious = int(n_participant * EPS)
 
     # backdoor trigger 
@@ -88,7 +88,7 @@ def training_CNN_with_attack(args, model, train_loader, test_loader, agg='randei
 
         for p in list(model_curr.parameters()):
             average_grad.append(np.zeros(p.data.shape))
-        if agg == 'randeigen':
+        if args.agg == 'randeigen':
             print('agg: randeigen')
 
             for idx, p in enumerate(model.parameters()):
@@ -101,7 +101,7 @@ def training_CNN_with_attack(args, model, train_loader, test_loader, agg='randei
                 # del avg_local
                 torch.cuda.empty_cache()
 
-        if agg == 'avg':
+        if args.agg == 'avg':
             print('agg: average')
             for idx, p in enumerate(model.parameters()):
                 avg_local = []
