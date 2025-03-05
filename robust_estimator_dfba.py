@@ -44,6 +44,7 @@ def power_iteration(mat, iterations, device):
     eigenvalue = u.T @ mat @ u
     return eigenvalue, u
 def randomized_agg_forced(data, eps_poison=0.2, eps_jl=0.1, eps_pow = 0.1, device = 'cuda:0', seed=12):
+    # print(data.shape)
     n = int(data.shape[0])
     feature_shape = data[0].shape
     n_dim = int(np.prod(np.array(feature_shape)))
@@ -68,6 +69,7 @@ def _randomized_agg(data, eps_poison=0.2, eps_jl=0.1, eps_pow = 0.1, threshold =
     k = min(int(math.log(d)//eps_jl**2), d)
     
     A = torch.randn((d, k)).to(device)
+    # print(A.shape)
     A = A/(k**0.5)
 
     Y = data_flatten @ A # n times k
@@ -98,5 +100,6 @@ def _randomized_agg(data, eps_poison=0.2, eps_jl=0.1, eps_pow = 0.1, threshold =
         kept_idx = uniform_rand > (proj_Y/torch.max(proj_Y))
         Y = Y[kept_idx]
         data = data[kept_idx]
-    return torch.mean(data, dim=0)
-    
+    out = torch.mean(data, dim=0)
+    del data
+    return out

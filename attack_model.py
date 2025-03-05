@@ -204,7 +204,7 @@ if __name__ == '__main__':
     parser.add_argument('--yt', default=0, type=int, help='target label')
     parser.add_argument('--trigger_size', default=4, type=int, help='trigger_size')
     # Aim Model Hyperparameters
-    parser.add_argument('--batch-size', default=128, type=int, help='batch size.')
+    parser.add_argument('--batch-size', default=512, type=int, help='batch size.')
     parser.add_argument('--lr', default=0.01, type=float, help='learning rate.')
     parser.add_argument('--epoch', default=100, type=int, help='training epoch.')
     # parser.add_argument('--norm', default=False, type=bool, help='normalize or not.')

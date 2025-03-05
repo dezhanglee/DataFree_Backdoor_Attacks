@@ -15,7 +15,7 @@ import random
 
 from robust_estimator_dfba import *
 
-EPS = 0.0 # corruption fraction 
+EPS = 0.2 # corruption fraction 
 
 
 # EPS of the batches will update malicious model params. 
@@ -25,9 +25,12 @@ def training_CNN_with_attack(args, model, train_loader, test_loader, agg='randei
     criterion = nn.CrossEntropyLoss()
     
 
-    n_participant = len(train_loader)
+    n_participant = len(train_loader)//3
     n_malicious = int(n_participant * EPS)
 
+    # backdoor trigger 
+    m = np.zeros((args.input_size, args.input_size))
+    m[-args.trigger_size:, -args.trigger_size:] = 1.0
     # randomly assign some partitions to be malicious
     random.seed(1)
     mal_idx = set(random.sample([i for i in range(n_participant)], n_malicious))
@@ -40,13 +43,18 @@ def training_CNN_with_attack(args, model, train_loader, test_loader, agg='randei
                 local_grads[i].append(np.zeros(p.data.shape))
         prev_average_grad = None
         for i, (images, labels) in enumerate(train_loader):
+            if i >= n_participant:
+                break
             
             model_curr = deepcopy(model)
             optimizer = torch.optim.SGD(model_curr.parameters(), lr=args.lr, weight_decay=0.)
             # submit bad gradients
+            # if they are malicious, take the current copy of the model and compute the bad param 
             if i in mal_idx:
-                pass
+                print("malicious")
+                delta = InjectBackdoor(model_curr, args)
             else:
+                # print("not malicious")
                 if torch.cuda.is_available():
                     images = Variable(images.cuda())
                     labels = Variable(labels.cuda())
@@ -72,7 +80,7 @@ def training_CNN_with_attack(args, model, train_loader, test_loader, agg='randei
                 # print(i, epoch)
             # all_params.append(curr_params)
             for idx, p in enumerate(model.parameters()):
-                grd = -1*(curr_params[idx].data - p.data)
+                grd = (-1*(curr_params[idx].data - p.data)).detach().cpu()
                 local_grads[i][idx] = grd
         # aggregate params from this epoch
         average_grad = []
@@ -90,6 +98,8 @@ def training_CNN_with_attack(args, model, train_loader, test_loader, agg='randei
                 # print(avg_local)
                 avg_local = torch.stack((avg_local))
                 average_grad[idx] = randomized_agg_forced(avg_local, device=device)
+                # del avg_local
+                torch.cuda.empty_cache()
 
         if agg == 'avg':
             print('agg: average')
@@ -109,7 +119,7 @@ def training_CNN_with_attack(args, model, train_loader, test_loader, agg='randei
         iter += 1
 
         if iter % 5 == 0:
-            print(curr_params)
+            # print(curr_params)
             # Calculate Accuracy
             correct = 0
             total = 0
@@ -133,7 +143,14 @@ def training_CNN_with_attack(args, model, train_loader, test_loader, agg='randei
             torch.save(model, args.model_dir)
             accuracy = 100 * correct / total
             print(f'epoch: {epoch}, test ACC: {float(accuracy)}')
+            acc, asr = ComputeACCASR(model, m, delta, args.yt, test_loader)
+            acc, asr = acc.item(), asr.item()
+            print(f"ACC: {acc}, ASR: {asr}")
+    
 
+    acc, asr = ComputeACCASR(model, m, delta, args.yt, test_loader)
+    acc, asr = acc.item(), asr.item()
+    print(f"ACC: {acc}, ASR: {asr}")
 
 
 # from .attack_utility import ComputeACCASR
