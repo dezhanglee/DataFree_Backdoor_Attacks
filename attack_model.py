@@ -206,7 +206,7 @@ if __name__ == '__main__':
     # Aim Model Hyperparameters
     parser.add_argument('--batch-size', default=128, type=int, help='batch size.')
     parser.add_argument('--lr', default=0.01, type=float, help='learning rate.')
-    parser.add_argument('--epoch', default=50, type=int, help='training epoch.')
+    parser.add_argument('--epoch', default=100, type=int, help='training epoch.')
     # parser.add_argument('--norm', default=False, type=bool, help='normalize or not.')
 
     # Checkpoints
@@ -220,6 +220,9 @@ if __name__ == '__main__':
     # Device options
     parser.add_argument('--device', default='cuda:0', type=str,
                         help='device used for training')
+
+    # parser.add_argument('--fl', default='1', type=str,
+    #                     help='FL setting for randeigen')
 
     args = parser.parse_args()
     np.random.seed(seed = args.manual_seed)

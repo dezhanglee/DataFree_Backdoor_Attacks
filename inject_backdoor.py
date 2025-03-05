@@ -7,6 +7,7 @@ import torch.nn as nn
 def channel_random_select(channel_num_list, yt=2):
     list_of_selected_neuron = np.zeros_like(channel_num_list)
     for i, channel_num in enumerate(channel_num_list):
+        np.random.seed(i) 
         list_of_selected_neuron[i] = np.random.choice(channel_num, 1)[0]
     list_of_selected_neuron[-1] = yt
     return list_of_selected_neuron
